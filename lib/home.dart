@@ -61,6 +61,18 @@ class _HomeState extends State<Home> {
     await _firestore.collection('transaksi').doc(docId).delete();
   }
 
+  int calculateSaldo(List<Transaksi> transaksi) {
+    int sum = 0;
+    for (Transaksi item in transaksi) {
+      if (item.kategori == 3) {
+        sum += item.nominal;
+      } else {
+        sum -= item.nominal;
+      }
+    }
+    return sum;
+  }
+
   @override
   Widget build(BuildContext context) {
     CollectionReference transaksiCollecction =
@@ -137,52 +149,7 @@ class _HomeState extends State<Home> {
             const EdgeInsets.only(top: 15, right: 15, left: 15, bottom: 75),
         child: SafeArea(
             child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: EdgeInsets.zero,
-              child: const Text(
-                'Catatan Keuangan',
-                style: TextStyle(
-                  color: Colors.cyan,
-                  fontSize: 15.0,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            Container(
-              width: double.infinity,
-              height: 160,
-              margin: const EdgeInsets.symmetric(vertical: 15.0),
-              padding: const EdgeInsets.all(20.0),
-              decoration: BoxDecoration(
-                color: Colors.cyan,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Saldo anda saat ini',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(
-                    height: 10,
-                  ),
-                  Text(
-                    'Rp 100.000',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
             StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: _firestore
                   .collection('transaksi')
@@ -219,21 +186,70 @@ class _HomeState extends State<Home> {
                         nominal, tglTransaksi,
                         uid: uid);
                   }).toList();
-                  return ListView.builder(
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: listTransaksi.length,
-                    shrinkWrap: true,
-                    itemBuilder: (context, index) {
-                      var transaksi = listTransaksi[index];
-                      var transaksiDocId = snapshot.data!.docs[index].id;
-                      return itemTransaksi(
-                          id: transaksiDocId,
-                          namaTransaksi: transaksi.namaTransaksi,
-                          tglTransaksi: transaksi.tglTransaksi,
-                          kategori: transaksi.kategori,
-                          nominal: transaksi.nominal,
-                          imgUrl: transaksi.foto);
-                    },
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.zero,
+                        child: const Text(
+                          'Catatan Keuangan',
+                          style: TextStyle(
+                            color: Colors.cyan,
+                            fontSize: 15.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        width: double.infinity,
+                        height: 160,
+                        margin: const EdgeInsets.symmetric(vertical: 15.0),
+                        padding: const EdgeInsets.all(20.0),
+                        decoration: BoxDecoration(
+                          color: Colors.cyan,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Saldo anda saat ini',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(
+                              height: 10,
+                            ),
+                            Text(
+                              'Rp ${noSimbolInIDFormat.format(calculateSaldo(listTransaksi))}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 30,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      ListView.builder(
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: listTransaksi.length,
+                        shrinkWrap: true,
+                        itemBuilder: (context, index) {
+                          var transaksi = listTransaksi[index];
+                          var transaksiDocId = snapshot.data!.docs[index].id;
+                          return itemTransaksi(
+                              id: transaksiDocId,
+                              namaTransaksi: transaksi.namaTransaksi,
+                              tglTransaksi: transaksi.tglTransaksi,
+                              kategori: transaksi.kategori,
+                              nominal: transaksi.nominal,
+                              imgUrl: transaksi.foto);
+                        },
+                      ),
+                    ],
                   );
                 }
               },
